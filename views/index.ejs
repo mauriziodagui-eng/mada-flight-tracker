@@ -130,7 +130,10 @@
 
             if (!map) {
                 map = L.map('map').setView([lat, lon], 6);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap &copy; CARTO'
+}).addTo(map);
             } else { map.setView([lat, lon], 6); }
 
             if (marker) map.removeLayer(marker);
