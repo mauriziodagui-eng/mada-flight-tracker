@@ -9,6 +9,7 @@
     <style>
         #map { height: 450px; width: 100%; border-radius: 1rem; }
         .map-card { display: none; }
+        .font-mono { font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace; }
     </style>
 </head>
 <body class="bg-slate-50 p-4 md:p-10 text-slate-800">
@@ -24,14 +25,15 @@
                 <h3 class="font-black uppercase text-sm tracking-widest text-blue-600 mb-4 text-center sm:text-left">Arrivi Aeroporto</h3>
                 <form action="/search-airport" method="GET" class="flex gap-3">
                     <input type="text" name="airport_iata" placeholder="Es: PSR" required class="flex-grow p-4 bg-slate-50 border-0 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 uppercase font-bold text-sm sm:text-base">
-                    <button class="bg-blue-600 text-white px-6 sm:px-8 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">CERCA</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 sm:px-8 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">CERCA</button>
                 </form>
             </div>
+            
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <h3 class="font-black uppercase text-sm tracking-widest text-emerald-600 mb-4 text-center sm:text-left">Tracciamento Volo</h3>
                 <form action="/search-flight" method="GET" class="flex gap-3">
                     <input type="text" name="flight_iata" placeholder="Es: FR6411" required class="flex-grow p-4 bg-slate-50 border-0 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-bold text-sm sm:text-base">
-                    <button class="bg-emerald-600 text-white px-6 sm:px-8 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">TRACCIA</button>
+                    <button type="submit" class="bg-emerald-600 text-white px-6 sm:px-8 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">TRACCIA</button>
                 </form>
             </div>
         </div>
@@ -49,17 +51,20 @@
             <div id="map"></div>
         </div>
 
+        <% if (errore) { %>
+            <div class="bg-amber-50 border-l-8 border-amber-400 text-amber-900 p-6 rounded-3xl mb-10 font-bold shadow-sm"><%= errore %></div>
+        <% } %>
+
         <% if (voli && voli.length > 0) { %>
             <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
                 <table class="min-w-full">
                     <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
                         <tr>
-                            <th class="px-6 py-5 text-left">Vettore</th>
-                            <th class="px-6 py-5 text-left">Tratta</th>
-                            <th class="px-6 py-5 text-center">Partenza (Sch)</th>
-                            <th class="px-6 py-5 text-center">Arrivo (Sch)</th>
-                            <th class="px-6 py-5 text-center">Status</th>
-                            <th class="px-6 py-5 text-center">Mappa</th>
+                            <th class="px-8 py-5 text-left">Vettore</th>
+                            <th class="px-8 py-5 text-left">Tratta</th>
+                            <th class="px-8 py-5 text-center">Data/Ora Arrivo</th>
+                            <th class="px-8 py-5 text-center">Status</th>
+                            <th class="px-8 py-5 text-center">Mappa</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -71,24 +76,21 @@
                         %>
                         <% voli.forEach(function(volo) { %>
                             <tr class="hover:bg-slate-50/80 transition-colors">
-                                <td class="px-6 py-6">
+                                <td class="px-8 py-6">
                                     <div class="text-sm font-black text-slate-800 uppercase leading-none mb-1"><%= volo.airline ? volo.airline.name : 'N/D' %></div>
                                     <div class="text-[10px] font-mono text-blue-600 font-bold tracking-widest"><%= volo.flight ? (volo.flight.iata || volo.flight.number) : 'N/D' %></div>
                                 </td>
-                                <td class="px-6 py-6">
+                                <td class="px-8 py-6">
                                     <div class="flex items-center gap-2 font-bold text-xs">
                                         <span class="text-slate-500"><%= volo.departure ? volo.departure.iata : '???' %></span>
                                         <span class="text-slate-300">➔</span>
                                         <span class="text-blue-600"><%= volo.arrival ? volo.arrival.iata : '???' %></span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-6 text-center font-mono text-xs font-bold text-slate-500">
-                                    <%= fmt(volo.departure ? volo.departure.scheduled : null) %>
-                                </td>
-                                <td class="px-6 py-6 text-center font-mono text-sm font-black text-blue-700">
+                                <td class="px-8 py-6 text-center font-mono text-sm font-black text-blue-700">
                                     <%= fmt(volo.arrival ? volo.arrival.scheduled : null) %>
                                 </td>
-                                <td class="px-6 py-6 text-center">
+                                <td class="px-8 py-6 text-center">
                                     <% 
                                         let bg = "bg-slate-100 text-slate-500";
                                         if(volo.flight_status === 'active') bg = "bg-green-100 text-green-700";
@@ -99,11 +101,11 @@
                                         <%= volo.flight_status %>
                                     </span>
                                 </td>
-                                <td class="px-6 py-6 text-center">
+                                <td class="px-8 py-6 text-center">
                                     <% if (volo.live && volo.live.latitude) { %>
                                         <button onclick="attivaRadar(<%= JSON.stringify(volo) %>)" class="bg-blue-50 text-blue-600 px-5 py-2.5 rounded-2xl text-[10px] font-black hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95">MAPPA</button>
                                     <% } else { %>
-                                        <span class="text-slate-200 text-[10px] italic font-bold">No GPS</span>
+                                        <span class="text-slate-200 text-[10px] italic font-bold">Nessun GPS</span>
                                     <% } %>
                                 </td>
                             </tr>
@@ -130,10 +132,13 @@
 
             if (!map) {
                 map = L.map('map').setView([lat, lon], 6);
+                
+                // NUOVO UTENTE MAPPA: Servizio CartoDB Voyager (Sblocca l'errore 403 delle WebView Android)
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap &copy; CARTO'
-}).addTo(map);
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap &copy; CARTO'
+                }).addTo(map);
+
             } else { map.setView([lat, lon], 6); }
 
             if (marker) map.removeLayer(marker);
